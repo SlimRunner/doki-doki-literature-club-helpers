@@ -1,0 +1,7 @@
+python-magic-bin
+numpy
+scipy
+matplotlib
+librosa
+opencv-python
+pyzbar
