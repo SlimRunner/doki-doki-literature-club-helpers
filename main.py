@@ -1,5 +1,6 @@
 from decodeYuri import analyze_base64_file
 from decodeSayori import extract_qr_from_audio
+from decodeMonika import decode_image
 
 if __name__ == "__main__":
     import sys
@@ -12,5 +13,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "sayori":
         result = extract_qr_from_audio(sys.argv[2])
         print(result)
+    elif sys.argv[1] == "monika":
+        result = decode_image(sys.argv[2])
     else:
         print("Usage: python analyze_base64.py type <file>")
