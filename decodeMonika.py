@@ -15,7 +15,9 @@ def decode_image(file_path):
     cropped = img.crop(crop_box)
 
     grayscale = cropped.convert("L")
-    blackWhite = grayscale.point(lambda x: 0 if x < 128 else 255, mode="1")  # pyright: ignore
+    blackWhite = grayscale.point(
+        lambda x: 0 if x < 128 else 255, mode="1"  # pyright: ignore
+    )
 
     image_bytes = flattenImageToBytes(blackWhite)
 
