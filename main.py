@@ -1,8 +1,10 @@
 from decodeSayori import extract_qr_from_audio
 from decodeYuri import decode_base64_file
 from decodeMonika import decode_image
-from argparse import ArgumentParser
+from poemwords import initUI
+
 from argparse import RawTextHelpFormatter
+from argparse import ArgumentParser
 from pathlib import Path
 import sys
 
@@ -56,6 +58,8 @@ if __name__ == "__main__":
         type=str,
         help="Specifies the *.chr target file",
     )
+
+    # initUI()
 
     pArgs = parser.parse_args()
 

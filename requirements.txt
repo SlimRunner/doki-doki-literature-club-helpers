@@ -6,3 +6,6 @@ librosa
 opencv-python
 pyzbar
 pillow
+windows-curses; sys_platform == "win32"
+keyboard
+tabulate
