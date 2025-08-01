@@ -1,4 +1,5 @@
 from decodeSayori import extract_qr_from_audio
+from decodeNatsuki import transform_image
 from decodeYuri import decode_base64_file
 from decodeMonika import decode_image
 from poemwords import initUI
@@ -68,10 +69,10 @@ if __name__ == "__main__":
 
     match chr_pick:
         case Character.YURI:
-            result = decode_base64_file(sys.argv[2], outdir)
+            decode_base64_file(chr_path, outdir)
         case Character.SAYORI:
-            result = extract_qr_from_audio(sys.argv[2], outdir, tempdir)
+            extract_qr_from_audio(chr_path, outdir, tempdir)
         case Character.NATSUKI:
-            parser.error("Not yet implemented")
+            transform_image(chr_path, outdir)
         case Character.JUST_MONIKA:
-            result = decode_image(sys.argv[2])
+            decode_image(chr_path)
