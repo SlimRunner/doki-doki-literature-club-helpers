@@ -5,6 +5,7 @@ import keyboard
 import curses
 import math
 import csv
+import os
 
 PtVector: TypeAlias = tuple[int, int, int]
 PtVectorFilter: TypeAlias = Callable[[int, int, int], bool]
@@ -35,7 +36,7 @@ def compareData():
     pass
 
 
-def initUI():
+def initPoemsUI(tempDir):
     ogData: WordPointsMaybe = []
     plusData: WordPoints = []
 
@@ -79,8 +80,13 @@ def initUI():
     for word, s, n, y in words:
         rows.append([word, *(", ".join(ptv) for ptv in rankPtVector((s, n, y)))])
 
-    print(tabulate(rows, header, tablefmt="github"))
-    print(f"\n{len(words)} words found")
+    tableText = tabulate(rows, header, tablefmt="github")
+    tableFile = os.path.join(tempDir, "poem-table.md")
+
+    with open(tableFile, "w") as file:
+        file.write(f"# Poem Words ({len(words)})\n\n")
+        file.write(tableText)
+    print(f"File written to {tableFile}")
     # curses.wrapper(manageUI)
 
 
