@@ -1,9 +1,3 @@
-from decodeSayori import extract_qr_from_audio
-from decodeNatsuki import transform_image
-from decodeYuri import decode_base64_file
-from decodeMonika import decode_image
-from poemwords import initPoemsUI
-
 from argparse import RawTextHelpFormatter
 from argparse import ArgumentParser
 from pathlib import Path
@@ -56,12 +50,17 @@ if __name__ == "__main__":
 
     match str(pArgs.mode):
         case Modes.YURI:
+            from decodeYuri import decode_base64_file
             decode_base64_file(pArgs.path, outdir)
         case Modes.SAYORI:
+            from decodeSayori import extract_qr_from_audio
             extract_qr_from_audio(pArgs.path, outdir, tempdir)
         case Modes.NATSUKI:
+            from decodeNatsuki import transform_image
             transform_image(pArgs.path, outdir)
         case Modes.JUST_MONIKA:
+            from decodeMonika import decode_image
             decode_image(pArgs.path)
         case Modes.WORD_POEMS:
+            from poemwords import initPoemsUI
             initPoemsUI(tempdir)
