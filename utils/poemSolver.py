@@ -1,4 +1,4 @@
-from PIL import Image, ImageGrab
+from PIL import Image, ImageGrab, ImageFilter
 from dotenv import load_dotenv
 from functools import partial
 import pygetwindow as gw
@@ -145,6 +145,7 @@ def refreshPoemWords(
         for x1, x2 in columns:
             for y1, y2 in rows:
                 cellImage = gameImage.crop((x1, y1 + yOff, x2, y2 + yOff))
+                cellImage = cellImage.filter(ImageFilter.GaussianBlur(radius=0.8))
                 # cellImage.save(f"./temp/cap-{idx}.png")
                 idx += 1
                 word: str = pytesseract.image_to_string(cellImage, lang=OCR_LANG)
