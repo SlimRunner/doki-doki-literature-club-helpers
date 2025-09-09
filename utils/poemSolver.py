@@ -156,7 +156,14 @@ def refreshPoemWords(
 
     # TODO: add a way to update the sorter on the fly
     words = poemsTransform(
-        poems, filter=lambda w, *_: w in whitelist, sorter=lambda *x: x
+        poems,
+        filter=lambda w, *_: w in whitelist,
+        sorter=lambda w, s, n, y: (w, s, n, y),
+        # sorter=lambda w, s, n, y: (-y, -n, s, w),
+        # sorter=lambda w, s, n, y: (-s, -y, n, w),
+        # sorter=lambda w, s, n, y: (-n, -s, y, w),
+        # sorter=lambda w, s, n, y: (-y, -n, s, w),
+        # sorter=lambda w, s, n, y: (-y, -s, n, w),
     )
 
     if len(words) != len(whitelist):
