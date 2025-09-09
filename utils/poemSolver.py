@@ -139,6 +139,8 @@ def refreshPoemWords(
     # run OCR on image -> list of words
     yOff = int((rows[0][1] - rows[0][0]) * 0.23)
 
+    replList = {"scafs": "scars"}
+
     idx = 0
     whitelist: list[str] = []
     try:
@@ -146,9 +148,14 @@ def refreshPoemWords(
             for y1, y2 in rows:
                 cellImage = gameImage.crop((x1, y1 + yOff, x2, y2 + yOff))
                 cellImage = cellImage.filter(ImageFilter.GaussianBlur(radius=0.8))
-                # cellImage.save(f"./temp/cap-{idx}.png")
                 idx += 1
                 word: str = pytesseract.image_to_string(cellImage, lang=OCR_LANG)
+                correction = replList[word] if word in replList else None
+                if correction is not None:
+                    print(f"correction happened: {word} -> {correction}")
+                    cellImage.save(f"./temp/cap-{idx}.png")
+                    print(f"saved image: ./temp/cap-{idx}.png")
+                    word = correction
                 whitelist.append(word.strip().lower().replace(" ", ""))
     except pytesseract.TesseractNotFoundError as err:
         label.config(text="OCR ERROR")
