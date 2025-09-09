@@ -161,7 +161,10 @@ def refreshPoemWords(
 
     if len(words) != len(whitelist):
         print("A word missed the target. Here is the list detected")
-        print(whitelist)
+        print(f"included {whitelist}")
+        print(
+            f"missing {set(w for w, *_ in words).symmetric_difference(set(whitelist))}"
+        )
 
     txt = tabulatePoems(words)
     label.config(text=txt)
