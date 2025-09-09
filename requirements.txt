@@ -1,11 +1,15 @@
-python-magic-bin
-numpy
-scipy
-matplotlib
-librosa
-opencv-python
-pyzbar
-pillow
-windows-curses; sys_platform == "win32"
 keyboard
+librosa
+matplotlib
+numpy
+opencv-python
+pillow
+python-magic-bin
+pyzbar
+scipy
 tabulate
+windows-curses; sys_platform == "win32"
+
+dotenv 
+pygetwindow
+pytesseract

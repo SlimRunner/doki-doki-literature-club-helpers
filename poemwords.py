@@ -1,17 +1,19 @@
 from collections.abc import Callable
-from tabulate import tabulate
-from typing import TypeAlias
+from utils.poemSolver import showPoemUI
 import keyboard
 import curses
 import math
 import csv
 import os
 
-PtVector: TypeAlias = tuple[int, int, int]
-PtVectorFilter: TypeAlias = Callable[[int, int, int], bool]
-WordPointsMaybe: TypeAlias = list[tuple[str, int | None, int | None, int | None]]
-WordPointCell: TypeAlias = tuple[str, int, int, int]
-WordPoints: TypeAlias = list[WordPointCell]
+from utils.aliases import (
+    PtVector,
+    PtVectorFilter,
+    WordPointsMaybe,
+    WordPointCellRaw,
+    WordPointCell,
+    WordPoints,
+)
 
 
 def print_pressed_keys(e: keyboard.KeyboardEvent):
@@ -32,144 +34,59 @@ def cursesMain(stdscr: curses.window):
     pass
 
 
-def compareData():
-    pass
+def intOrNone(text: str) -> int | None:
+    try:
+        return int(text)
+    except:
+        return None
 
 
-def initPoemsUI(tempDir):
-    ogData: WordPointsMaybe = []
-    plusData: WordPoints = []
+def loadPoems(path: str):
+    poemWords: list[WordPointCellRaw] = []
 
-    with open("./data-sets/ddlc-og-poemwords.csv", newline="") as csvfile:
+    with open(path, newline="") as csvfile:
         reader = csv.reader(csvfile)
 
         for i, row in enumerate(reader):
             if i == 0:
                 continue
             word, say, nat, yur = row
-            say, nat, yur = (None if n == "?" else int(n) for n in (say, nat, yur))
-            ogData.append((word, say, nat, yur))
+            poemWords.append((word, say, nat, yur))
 
-    with open("./data-sets/ddlc-plus-poemwords.csv", newline="") as csvfile:
-        reader = csv.reader(csvfile)
+    return poemWords
 
-        for i, row in enumerate(reader):
-            if i == 0:
-                continue
-            word, say, nat, yur = row
-            say, nat, yur = (int(n) for n in (say, nat, yur))
-            plusData.append((word, say, nat, yur))
 
-    assertWordIntegrity(ogData, plusData)
-    assertFavoriteWords(ogData, plusData)
-    assertKnownLikenessVector(ogData, plusData)
+def testPoems():
+    origPoems: WordPointsMaybe = []
+    plusPoems: WordPoints = []
 
-    wordFilter: PtVectorFilter = lambda s, n, y: True
-    wordSorter: Callable[[WordPointCell]] = lambda x: (x[3], x[2], x[1], x[0])
+    intList = lambda w, s, n, y: (str(w), int(s), int(n), int(y))
+    intNoneList = lambda w, s, n, y: (str(w), intOrNone(s), intOrNone(n), intOrNone(y))
 
-    words = sorted(filterWords(plusData, wordFilter), key=wordSorter)
-    header = [
-        "Word",
-        "Loves",
-        "Likes",
-        "Dislikes",
-        "Hates",
+    origPoems = [
+        intNoneList(w, s, n, y)
+        for (w, s, n, y) in loadPoems("./data-sets/ddlc-og-poemwords.csv")
     ]
-    rows: list[list[str]] = []
+    plusPoems = [
+        intList(w, s, n, y)
+        for (w, s, n, y) in loadPoems("./data-sets/ddlc-plus-poemwords.csv")
+    ]
 
-    for word, s, n, y in words:
-        rows.append([word, *(", ".join(ptv) for ptv in rankPtVector((s, n, y)))])
+    from utils.validatePoemwords import validateLegacy
 
-    tableText = tabulate(rows, header, tablefmt="github")
-    tableFile = os.path.join(tempDir, "poem-table.md")
+    validateLegacy(origPoems, plusPoems)
 
-    with open(tableFile, "w") as file:
-        file.write(f"# Poem Words ({len(words)})\n\n")
-        file.write(tableText)
-    print(f"File written to {tableFile}")
+
+def initPoemsUI(tempDir: str):
+    plusPoems: WordPoints = []
+    intList = lambda w, s, n, y: (str(w), int(s), int(n), int(y))
+
+    plusPoems = [
+        intList(w, s, n, y)
+        for (w, s, n, y) in loadPoems("./data-sets/ddlc-plus-poemwords.csv")
+        if w != "9:15"
+    ]
+
+    showPoemUI(plusPoems)
+    # writePoemsToTable(plusPoems, os.path.join(tempDir, "poem-table.md"))
     # curses.wrapper(manageUI)
-
-
-def stateIdle():
-    pass
-
-
-def stateExit():
-    pass
-
-
-def editingQuery():
-    pass
-
-
-def validatingQuery():
-    pass
-
-
-def typeaheadStart():
-    pass
-
-
-def typeaheadAccumulating():
-    pass
-
-
-def assertWordIntegrity(src1: WordPointsMaybe, src2: WordPoints):
-    A = set(w for w, _, _, _ in src1)
-    B = set(w for w, _, _, _ in src2)
-    assert len(A) == len(src1)
-    assert len(B) == len(src2)
-
-    AdiffB = A.difference(B)
-    assert len(AdiffB) == 0
-
-    BdiffA = B.difference(A)
-    assert len(BdiffA) == 1
-    assert "9:15" in BdiffA
-
-
-def assertFavoriteWords(src1: WordPointsMaybe, src2: WordPoints):
-    A = {w: max(p for p in pts if p is not None) for w, *pts in src1}
-    B = {w: max(p for p in pts if p is not None) for w, *pts in src2}
-
-    for key, value in A.items():
-        if key in B:
-            assert value == B[key]
-        else:
-            assert False
-
-
-def assertKnownLikenessVector(src1: WordPointsMaybe, src2: WordPoints):
-    A = {w: tuple(pts) for w, *pts in src1 if not any(p is None for p in pts)}
-    B = {w: tuple(pts) for w, *pts in src2}
-
-    for key, value in A.items():
-        if key in B:
-            assert value == B[key]
-        else:
-            assert False
-
-
-def filterWords(data: WordPoints, filter: PtVectorFilter):
-    return [(w, s, n, y) for w, s, n, y in data if filter(s, n, y)]
-
-
-def rankPtVector(vector: PtVector):
-    ranked = parsePtVector(vector)
-
-    vecList: list[list[str]] = [[] for _ in range(4)]
-
-    for girl in ["sayori", "natsuki", "yuri"]:
-        vecList[ranked[girl]] += [girl]
-
-    return list(reversed(vecList))
-
-
-def parsePtVector(vector: PtVector):
-    sayori, natsuki, yuri = vector
-
-    return {
-        "sayori": sayori,
-        "natsuki": natsuki,
-        "yuri": yuri,
-    }
