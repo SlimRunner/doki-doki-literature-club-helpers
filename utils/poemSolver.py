@@ -182,13 +182,14 @@ def refreshPoemWords(
                 cellImage = cellImage.filter(ImageFilter.GaussianBlur(radius=0.8))
                 idx += 1
                 word: str = pytesseract.image_to_string(cellImage, lang=OCR_LANG)
+                word = word.strip().lower().replace(" ", "")
                 correction = replList[word] if word in replList else None
                 if correction is not None:
                     print(f"correction happened: {word} -> {correction}")
                     cellImage.save(f"./temp/cap-{idx}.png")
                     print(f"saved image: ./temp/cap-{idx}.png")
                     word = correction
-                whitelist.append(word.strip().lower().replace(" ", ""))
+                whitelist.append(word)
     except pytesseract.TesseractNotFoundError as err:
         lblTable.config(text="OCR ERROR")
         print(err)
