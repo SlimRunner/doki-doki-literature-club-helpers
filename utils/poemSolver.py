@@ -163,6 +163,7 @@ def refreshPoemWords(
         # sorter=lambda w, s, n, y: (-y, -n, s, w),
         # sorter=lambda w, s, n, y: (-s, -y, n, w),
         # sorter=lambda w, s, n, y: (-n, -s, y, w),
+        # sorter=lambda w, s, n, y: (-n, -y, y, w),
         # sorter=lambda w, s, n, y: (-y, -n, s, w),
         # sorter=lambda w, s, n, y: (-y, -s, n, w),
     )
