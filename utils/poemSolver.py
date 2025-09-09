@@ -147,10 +147,8 @@ def refreshPoemWords(
                 cellImage = gameImage.crop((x1, y1 + yOff, x2, y2 + yOff))
                 cellImage.save(f"./temp/cap-{idx}.png")
                 idx += 1
-                word: str = pytesseract.image_to_string(
-                    cellImage, lang=OCR_LANG
-                ).strip()
-                whitelist.append(word.lower())
+                word: str = pytesseract.image_to_string(cellImage, lang=OCR_LANG)
+                whitelist.append(word.strip().lower().replace(" ", ""))
     except pytesseract.TesseractNotFoundError as err:
         label.config(text="OCR ERROR")
         print(err)
