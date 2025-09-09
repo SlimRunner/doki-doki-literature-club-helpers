@@ -25,6 +25,7 @@ def poemsTransform(
 
 def tabulatePoems(poems: WordPoints):
     header = [
+        "#",
         "Word",
         "Sayori",
         "Natsuki",
@@ -32,8 +33,8 @@ def tabulatePoems(poems: WordPoints):
     ]
     rows: list[list[str]] = []
 
-    for word, s, n, y in poems:
-        rows.append([word, str(s), str(n), str(y)])
+    for i, (word, s, n, y) in enumerate(poems):
+        rows.append([str(i), word, str(s), str(n), str(y)])
 
     tableText = tabulate(rows, header, tablefmt="github")
     return tableText

@@ -13,6 +13,7 @@ from utils.tableMaker import (
 )
 from utils.aliases import (
     WordPoints,
+    Scoreboard,
 )
 
 load_dotenv()
@@ -109,8 +110,38 @@ def keepBlackOnly(img, tol=100):
     return img
 
 
+def updateScores(lblScores: tk.Label, scores: tuple[int, int, int]):
+    lblText = ", ".join(f"{n}: {v}" for (n, v) in zip(["Say", "Nat", "Yur"], scores))
+    lblScores.config(text=lblText)
+
+
+def addScore(lblScores: tk.Label, scores: Scoreboard, event: tk.Event):
+    if event.keysym == "Return" and isinstance(event.widget, tk.Entry):
+        txtEntry = event.widget
+        try:
+            index = int(txtEntry.get())
+            entry = scores.words[index]
+            scores.add(entry[1:])
+            updateScores(lblScores, scores.packed)
+        except IndexError as err:
+            print("index out of range")
+        except ValueError:
+            print("invalid integer")
+        txtEntry.delete(0, tk.END)
+
+
+def resetTallies(lblScores: tk.Label, scores: Scoreboard):
+    scores.reset()
+    updateScores(lblScores, scores.packed)
+
+
 def refreshPoemWords(
-    poems: WordPoints, winUI: tk.Tk, targetWin: gw.Window, label: tk.Label
+    poems: WordPoints,
+    winUI: tk.Tk,
+    targetWin: gw.Window,
+    lblTable: tk.Label,
+    lblScores: tk.Label,
+    scores: Scoreboard,
 ):
     targetWin.activate()
     time.sleep(50 / 1000)
@@ -124,6 +155,7 @@ def refreshPoemWords(
     )
     gameImage = ImageGrab.grab(bbox)
 
+    # detect rows and columns
     columns = findColumns(gameImage)
     assert columns[0] is not None
     l, m, r = columns
@@ -158,7 +190,7 @@ def refreshPoemWords(
                     word = correction
                 whitelist.append(word.strip().lower().replace(" ", ""))
     except pytesseract.TesseractNotFoundError as err:
-        label.config(text="OCR ERROR")
+        lblTable.config(text="OCR ERROR")
         print(err)
         return
 
@@ -175,14 +207,16 @@ def refreshPoemWords(
         # sorter=lambda w, s, n, y: (-y, -s, n, w),
     )
 
+    scores.setWords(words)
+
     if len(words) != len(whitelist):
         print("A word missed the target. Here is the list detected")
         print(f"included {whitelist}")
         diffSet = set(w for w, *_ in words).symmetric_difference(set(whitelist))
         print(f"missing {diffSet}")
 
-    txt = tabulatePoems(words)
-    label.config(text=txt)
+    lblTable.config(text=tabulatePoems(words))
+    updateScores(lblScores, scores.packed)
 
 
 def showPoemUI(poems: WordPoints):
@@ -196,14 +230,35 @@ def showPoemUI(poems: WordPoints):
     root = tk.Tk()
     root.title("DDLC+ Words")
     root.attributes("-topmost", True)
+    root.resizable(False, False)
     root.geometry("+50+100")
 
-    label = tk.Label(root, text="Starting...", font=("Courier New", 10), justify="left")
-    buttonClickPartial = partial(refreshPoemWords, poems, root, window, label)
-    button = tk.Button(root, text="refresh", width=25, command=buttonClickPartial)
+    scores = Scoreboard()
 
-    button.pack()
-    label.pack()
+    lblTable = tk.Label(
+        root, text="Starting...", font=("Courier New", 10), justify="left"
+    )
+    lblScores = tk.Label(
+        root, text="scores...", font=("Courier New", 10), justify="left"
+    )
+    refreshClickPartial = partial(
+        refreshPoemWords, poems, root, window, lblTable, lblScores, scores
+    )
+    btnRefresh = tk.Button(
+        root, text="read words", width=25, command=refreshClickPartial
+    )
+    resetClickPartial = partial(resetTallies, lblScores, scores)
+    btnReset = tk.Button(root, text="reset", width=10, command=resetClickPartial)
+    txtEntry = tk.Entry(root, width=5)
+
+    btnRefresh.pack()
+    lblTable.pack()
+    txtEntry.pack()
+    lblScores.pack()
+    btnReset.pack()
+
+    entryKeyPartial = partial(addScore, lblScores, scores)
+    txtEntry.bind("<KeyRelease>", entryKeyPartial)
 
     if setUpTesseract():
         root.mainloop()
