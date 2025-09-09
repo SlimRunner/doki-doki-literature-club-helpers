@@ -160,7 +160,7 @@ def refreshPoemWords(
         poems,
         filter=lambda w, *_: w in whitelist,
         sorter=lambda w, s, n, y: (w, s, n, y),
-        # sorter=lambda w, s, n, y: (-y, -n, s, w),
+        # sorter=lambda w, s, n, y: (-s, -n, y, w),
         # sorter=lambda w, s, n, y: (-s, -y, n, w),
         # sorter=lambda w, s, n, y: (-n, -s, y, w),
         # sorter=lambda w, s, n, y: (-n, -y, y, w),
