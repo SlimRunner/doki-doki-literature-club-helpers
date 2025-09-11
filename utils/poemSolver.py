@@ -12,8 +12,9 @@ from utils.tableMaker import (
     tabulatePoems,
 )
 from utils.aliases import (
-    WordPoints,
+    WordPointCell,
     Scoreboard,
+    WordPoints,
 )
 
 load_dotenv()
@@ -110,8 +111,20 @@ def keepBlackOnly(img, tol=100):
     return img
 
 
-def updateScores(lblScores: tk.Label, scores: tuple[int, int, int]):
-    lblText = ", ".join(f"{n}: {v}" for (n, v) in zip(["Say", "Nat", "Yur"], scores))
+def customScore(vec: WordPointCell, tally: Scoreboard):
+    Tsay, Tnat, Tyur = tally.packed
+    w, s, n, y = vec
+
+    Ts_new, Tn_new, Ty_new = Tsay + s, Tnat + n, Tyur + y
+
+    return (abs(Tn_new - Ty_new), -s, w)
+    # return (abs(Ts_new - Tn_new) + abs(Ts_new - Ty_new) + abs(Tn_new - Ty_new), -s, w)
+
+
+def updateScores(lblScores: tk.Label, scores: Scoreboard):
+    vec = zip(["Say", "Nat", "Yur"], scores.packed)
+    lblText = ", ".join(f"{n}: {v}" for (n, v) in vec)
+    lblText = f"{scores.count}: ({lblText})"
     lblScores.config(text=lblText)
 
 
@@ -122,7 +135,7 @@ def addScore(lblScores: tk.Label, scores: Scoreboard, event: tk.Event):
             index = int(txtEntry.get())
             entry = scores.words[index]
             scores.add(entry[1:])
-            updateScores(lblScores, scores.packed)
+            updateScores(lblScores, scores)
         except IndexError as err:
             print("index out of range")
         except ValueError:
@@ -132,7 +145,11 @@ def addScore(lblScores: tk.Label, scores: Scoreboard, event: tk.Event):
 
 def resetTallies(lblScores: tk.Label, scores: Scoreboard):
     scores.reset()
-    updateScores(lblScores, scores.packed)
+    updateScores(lblScores, scores)
+
+
+columns = None
+rows = None
 
 
 def refreshPoemWords(
@@ -155,15 +172,20 @@ def refreshPoemWords(
     )
     gameImage = ImageGrab.grab(bbox)
 
-    # detect rows and columns
-    columns = findColumns(gameImage)
-    assert columns[0] is not None
-    l, m, r = columns
-    columns = [(l, m), (m, r)]
+    global columns
+    global rows
 
-    rows = findRows(gameImage)
-    assert len(rows) == 14
-    rows = list(zip(rows[1:11:2], rows[2:11:2]))
+    # detect rows and columns
+    if columns is None:
+        columns = findColumns(gameImage)
+        assert columns[0] is not None
+        l, m, r = columns
+        columns = [(l, m), (m, r)]
+
+    if rows is None:
+        rows = findRows(gameImage)
+        assert len(rows) == 14
+        rows = list(zip(rows[1:11:2], rows[2:11:2]))
 
     # process image -> image (optional)
     gameImage = keepBlackOnly(gameImage)
@@ -171,13 +193,15 @@ def refreshPoemWords(
     # run OCR on image -> list of words
     yOff = int((rows[0][1] - rows[0][0]) * 0.23)
 
-    replList = {"scafs": "scars"}
+    replList = {"scafs": "scars", "joey": "joy"}
 
     idx = 0
     whitelist: list[str] = []
+    wordIndex: dict[str, tuple[int, int]] = {}
+
     try:
-        for x1, x2 in columns:
-            for y1, y2 in rows:
+        for col, (x1, x2) in enumerate(columns):
+            for row, (y1, y2) in enumerate(rows):
                 cellImage = gameImage.crop((x1, y1 + yOff, x2, y2 + yOff))
                 cellImage = cellImage.filter(ImageFilter.GaussianBlur(radius=0.8))
                 idx += 1
@@ -189,6 +213,7 @@ def refreshPoemWords(
                     cellImage.save(f"./temp/cap-{idx}.png")
                     print(f"saved image: ./temp/cap-{idx}.png")
                     word = correction
+                wordIndex[word] = (row, col)
                 whitelist.append(word)
     except pytesseract.TesseractNotFoundError as err:
         lblTable.config(text="OCR ERROR")
@@ -199,6 +224,14 @@ def refreshPoemWords(
     words = poemsTransform(
         poems,
         filter=lambda w, *_: w in whitelist,
+        sorter=lambda *_: _,
+    )
+
+    setChanged = scores.words != words
+
+    words = poemsTransform(
+        words,
+        filter=lambda *_: True,
         sorter=lambda w, s, n, y: (w, s, n, y),
         # sorter=lambda w, s, n, y: (-s, -n, y, w),
         # sorter=lambda w, s, n, y: (-s, -y, n, w),
@@ -206,9 +239,12 @@ def refreshPoemWords(
         # sorter=lambda w, s, n, y: (-n, -y, s, w),
         # sorter=lambda w, s, n, y: (-y, -n, s, w),
         # sorter=lambda w, s, n, y: (-y, -s, n, w),
+        # sorter=lambda *wv: customScore((*wv,), scores),
     )
 
-    scores.setWords(words)
+    if setChanged:
+        scores.setWords(words)
+        scores.add(words[0][1:])
 
     if len(words) != len(whitelist):
         print("A word missed the target. Here is the list detected")
@@ -216,8 +252,8 @@ def refreshPoemWords(
         diffSet = set(w for w, *_ in words).symmetric_difference(set(whitelist))
         print(f"missing {diffSet}")
 
-    lblTable.config(text=tabulatePoems(words))
-    updateScores(lblScores, scores.packed)
+    lblTable.config(text=tabulatePoems(words, wordIndex))
+    updateScores(lblScores, scores)
 
 
 def showPoemUI(poems: WordPoints):
@@ -232,7 +268,7 @@ def showPoemUI(poems: WordPoints):
     root.title("DDLC+ Words")
     root.attributes("-topmost", True)
     root.resizable(False, False)
-    root.geometry("+50+100")
+    root.geometry("+30+100")
 
     scores = Scoreboard()
 

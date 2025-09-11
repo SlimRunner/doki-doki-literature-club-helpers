@@ -2,6 +2,7 @@ from collections.abc import Callable
 from tabulate import tabulate
 
 from utils.aliases import (
+    VectorSortWeight,
     WordVectorFilter,
     PtVectorFilter,
     WordVectorMap,
@@ -17,24 +18,41 @@ class TableOptions:
 
 
 def poemsTransform(
-    poems: WordPoints, filter: WordVectorFilter, sorter: WordVectorMap
+    poems: WordPoints,
+    filter: WordVectorFilter,
+    sorter: VectorSortWeight,
 ) -> WordPoints:
     poemsSubset: WordPoints = [wordVec for wordVec in poems if filter(*wordVec)]
     return sorted(poemsSubset, key=lambda t: sorter(*t))
 
 
-def tabulatePoems(poems: WordPoints):
-    header = [
-        "#",
-        "Word",
-        "Sayori",
-        "Natsuki",
-        "Yuri",
-    ]
+def tabulatePoems(poems: WordPoints, coords: dict[str, tuple[int, int]] | None = None):
+    header = (
+        [
+            "#",
+            "Word",
+            "Sayori",
+            "Natsuki",
+            "Yuri",
+        ]
+        if coords is None
+        else [
+            "#",
+            "Word",
+            "Pos",
+            "Sayori",
+            "Natsuki",
+            "Yuri",
+        ]
+    )
     rows: list[list[str]] = []
 
     for i, (word, s, n, y) in enumerate(poems):
-        rows.append([str(i), word, str(s), str(n), str(y)])
+        if coords is None:
+            rows.append([str(i), word, str(s), str(n), str(y)])
+        else:
+            coord = ",".join(str(c + 1) for c in coords[word])
+            rows.append([str(i), word, coord, str(s), str(n), str(y)])
 
     tableText = tabulate(rows, header, tablefmt="github")
     return tableText
