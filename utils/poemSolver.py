@@ -177,15 +177,15 @@ def refreshPoemWords(
 
     # detect rows and columns
     if columns is None:
-        columns = findColumns(gameImage)
-        assert columns[0] is not None
-        l, m, r = columns
+        c = findColumns(gameImage)
+        assert c[0] is not None
+        l, m, r = c
         columns = [(l, m), (m, r)]
 
     if rows is None:
-        rows = findRows(gameImage)
-        assert len(rows) == 14
-        rows = list(zip(rows[1:11:2], rows[2:11:2]))
+        r = findRows(gameImage)
+        assert len(r) == 14
+        rows = list(zip(r[1:11:2], r[2:11:2]))
 
     # process image -> image (optional)
     gameImage = keepBlackOnly(gameImage)
