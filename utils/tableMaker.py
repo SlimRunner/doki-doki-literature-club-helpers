@@ -17,13 +17,18 @@ class TableOptions:
     AFFINITY_MAJOR = "affinity"
 
 
-def poemsTransform(
+def filterPoemWords(
     poems: WordPoints,
     filter: WordVectorFilter,
+) -> WordPoints:
+    return [wordVec for wordVec in poems if filter(*wordVec)]
+
+
+def sortPoemWords(
+    poems: WordPoints,
     sorter: VectorSortWeight,
 ) -> WordPoints:
-    poemsSubset: WordPoints = [wordVec for wordVec in poems if filter(*wordVec)]
-    return sorted(poemsSubset, key=lambda t: sorter(*t))
+    return sorted(poems, key=lambda t: sorter(*t))
 
 
 def tabulatePoems(poems: WordPoints, coords: dict[str, tuple[int, int]] | None = None):

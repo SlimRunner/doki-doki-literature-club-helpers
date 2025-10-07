@@ -8,7 +8,8 @@ import time
 import os
 
 from utils.tableMaker import (
-    poemsTransform,
+    filterPoemWords,
+    sortPoemWords,
     tabulatePoems,
 )
 from utils.aliases import (
@@ -221,17 +222,15 @@ def refreshPoemWords(
         return
 
     # TODO: add a way to update the sorter on the fly
-    words = poemsTransform(
+    words = filterPoemWords(
         poems,
         filter=lambda w, *_: w in whitelist,
-        sorter=lambda *_: _,
     )
 
     setChanged = scores.words != words
 
-    words = poemsTransform(
+    words = sortPoemWords(
         words,
-        filter=lambda *_: True,
         sorter=lambda w, s, n, y: (w, s, n, y),
         # sorter=lambda w, s, n, y: (-s, -n, y, w),
         # sorter=lambda w, s, n, y: (-s, -y, n, w),
